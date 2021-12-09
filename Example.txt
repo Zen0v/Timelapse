@@ -1,0 +1,14 @@
+# Example commands to run Timelapse class from CLI
+
+# Defaults
+Camera ID: 1
+Capture interval: 5 seconds
+Capture Period: 60 seconds
+Headless: False
+Preview: False
+
+# Capture a picture every 30 seconds and stop capture after 3600 seconds (1 hour)
+python3 timelapse.py -i 30 -p 3600 --preview
+
+# Use the second camera to capture timelapse
+python3 timelapse.py --id 2
