@@ -19,31 +19,31 @@ class CaptureMode(enum.Enum):
     CONT = 2
 
 class Timelapse(Thread):
-    def __init__(self, camID=None, headless=False, genVideo=False, camRes=(1280, 720), capInterval=5, capPeriod=60, capMode=CaptureMode.PERIOD):
+    def __init__(self, camID=None, headless=False, genVideo=False, capInterval=5, capPeriod=60, capMode=CaptureMode.PERIOD):
         if capInterval < 1:
             logging.error("Capture interval cannot be less than 1 second")
             return
 
         super(Timelapse, self).__init__()
-        self.camID = int(camID) if camID or camID == 0 else self.clientPickCam()
+        self.camID = int(camID) if camID and camID >= 0 else self.clientPickCam()
 
         logging.basicConfig(level=logging.DEBUG)
         logging.info(f"Camera {self.camID + 1} selected")
 
-        self.capDir = "captures"
+        self.capDir = f"{os.getcwd()}/captures"
         self.camera = None
         self.capInterval = capInterval
         self.capPeriod = capPeriod
         self.capMode = capMode
 
-        self.camRes = camRes
+        self.camRes = None
         self.displayRes = (640, 360)
 
         self.headless = headless
         self.genVideo = genVideo
 
-        if not os.path.exists(f"{os.getcwd()}/{self.capDir}"):
-            os.mkdir(f"{os.getcwd()}/{self.capDir}")
+        if not os.path.exists(f"{self.capDir}"):
+            os.mkdir(f"{self.capDir}")
             logging.info("No captures dir, creating...")
 
         self.running = False
@@ -110,7 +110,7 @@ class Timelapse(Thread):
 
                         logging.info(f"Captured Image from {self.camID}")
                         now = datetime.now()
-                        imwrite(f"{os.getcwd()}/{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
+                        imwrite(f"{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
                 else:
                     logging.warning(f"Could not grab frame from camera {self.camID}")
 
@@ -135,7 +135,7 @@ class Timelapse(Thread):
 
                         logging.info(f"Captured Image from {self.camID}")
                         now = datetime.now()
-                        imwrite(f"{os.getcwd()}/{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
+                        imwrite(f"{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
                 else:
                     logging.warning(f"Could not grab frame from camera {self.camID}")
 
@@ -198,20 +198,21 @@ class Timelapse(Thread):
 
 # From here down is for stand-alone CLI
 def createParser():
-    parser = argparse.ArgumentParser(
+    tl_parser = argparse.ArgumentParser(
         prog="Zen's Timelapse",
         description="Create timelapsed videos"
     )
 
-    parser.add_argument(
+    # TODO: Add args: [stitch fps] [capture modes] [custom capture dir]
+    tl_parser.add_argument(
         "--id",
         "--camID",
         metavar="id",
-        default=1,
+        default=0,
         type=int,
         help="Which camera (usually 1 or 2) you'd like to use"
     )
-    parser.add_argument(
+    tl_parser.add_argument(
         "-i",
         "--capInt",
         "--capInterval",
@@ -220,7 +221,7 @@ def createParser():
         type=int,
         help="Seconds between taking each photo"
     )
-    parser.add_argument(
+    tl_parser.add_argument(
         "-p",
         "--capPeriod",
         metavar="period",
@@ -228,20 +229,27 @@ def createParser():
         type=int,
         help="Specifies length of the timelapse in seconds"
     )
-    parser.add_argument(
+    tl_parser.add_argument(
         "--headless",
         default=False,
         action="store_true",
         help="If specified, will not display live view"
     )
-    parser.add_argument(
+    tl_parser.add_argument(
         "--preview",
         default=False,
         action="store_true",
         help="Display preview of camera to setup before starting timelapse"
     )
+    tl_parser.add_argument(
+        "-s",
+        "--stitch",
+        default=False,
+        action="store_true",
+        help="Stitch all photos in captures directory into video"
+    )
 
-    return parser
+    return tl_parser
 
 
 if __name__ == '__main__':
@@ -254,7 +262,7 @@ if __name__ == '__main__':
         capInterval=args.capInt,
         capPeriod=args.capPeriod,
         headless=args.headless,
-        genVideo=True
+        genVideo=args.stitch
     )
 
     if args.preview:
