@@ -18,8 +18,14 @@ class CaptureMode(enum.Enum):
     PERIOD = 1
     CONT = 2
 
+class Res:
+    x480 = (640, 480)
+    x720 = (1280, 720)
+    x1080 = (1920, 1080)
+
+
 class Timelapse(Thread):
-    def __init__(self, camID=None, headless=False, genVideo=False, capInterval=5, capPeriod=60, capMode=CaptureMode.PERIOD):
+    def __init__(self, camID=None, camRes=None, headless=False, genVideo=False, capInterval=5, capPeriod=60, capMode=CaptureMode.PERIOD):
         if capInterval < 1:
             logging.error("Capture interval cannot be less than 1 second")
             return
@@ -36,8 +42,8 @@ class Timelapse(Thread):
         self.capPeriod = capPeriod
         self.capMode = capMode
 
-        self.camRes = None
-        self.displayRes = (640, 360)
+        self.camRes = camRes
+        self.displayRes = None
 
         self.headless = headless
         self.genVideo = genVideo
@@ -64,20 +70,21 @@ class Timelapse(Thread):
         self.close()
 
     # Simply show a window with a live camera view
-    def preview(self):
-        self.initCam()
+    def preview(self, res=None):
+        self.initCam(res=res)
+        logging.info(f"{self.camRes[0]}x{self.camRes[1]}")
 
         logging.info("Showing camera preview")
         while True:
             success, img = self.camera.read()
             if success:
-                imshow("Preview", resize(img, self.displayRes))
+                imshow("Preview", img)
 
             if waitKey(1) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 break
 
-    def initCam(self):
+    def initCam(self, res=None):
         if not self.camera:
             if platform.system() == "Windows":
                 self.camera = VideoCapture(self.camID, cv2.CAP_DSHOW)
@@ -85,9 +92,17 @@ class Timelapse(Thread):
                 self.camera = VideoCapture(self.camID)
         logging.info(f"Camera {self.camID + 1} initialized")
 
-        self.camera.set(CAP_PROP_FRAME_WIDTH, self.camRes[0])
-        self.camera.set(CAP_PROP_FRAME_HEIGHT, self.camRes[1])
-        logging.info("Set camera resolution")
+        if res or self.camRes:
+            if self.camRes is None:
+                self.camRes = res
+
+            self.camera.set(CAP_PROP_FRAME_WIDTH, self.camRes[0])
+            self.camera.set(CAP_PROP_FRAME_HEIGHT, self.camRes[1])
+            logging.info("Set camera resolution")
+        else:
+            if self.camRes is None:
+                self.camRes = (int(self.camera.get(CAP_PROP_FRAME_WIDTH)), int(self.camera.get(CAP_PROP_FRAME_HEIGHT)))
+            logging.info("Grabbed camera resolution")
 
     def startCapture(self, capMode):
         self.initCam()
@@ -127,7 +142,7 @@ class Timelapse(Thread):
 
                 if success:
                     if not self.headless:
-                        imshow("Timelapse View", resize(img, self.displayRes))
+                        imshow("Timelapse View", img)
 
                     # If the interval passes, capture the frame and save to disk
                     if time.time() - frameDelta >= self.capInterval:
@@ -203,7 +218,7 @@ def createParser():
         description="Create timelapsed videos"
     )
 
-    # TODO: Add args: [stitch fps] [capture modes] [custom capture dir]
+    # TODO: Add flags/args: [stitch fps] [capture modes] [custom capture dir] [clear cap dir]
     tl_parser.add_argument(
         "--id",
         "--camID",
@@ -258,7 +273,7 @@ if __name__ == '__main__':
 
     timelapse = Timelapse(
         camID=args.id - 1,
-        camRes=(1920, 1080),
+        camRes=Res.x720,
         capInterval=args.capInt,
         capPeriod=args.capPeriod,
         headless=args.headless,

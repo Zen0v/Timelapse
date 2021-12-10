@@ -1,7 +1,7 @@
 # Author: Rodrigo Graca
 import sys
 
-from timelapse import Timelapse, createParser
+from timelapse import Timelapse, createParser, Res
 
 def main():
     parser = createParser()
@@ -9,7 +9,7 @@ def main():
 
     timelapse = Timelapse(
         camID=args.id,
-        camRes=(1920, 1080),
+        camRes=Res.x720,
         capInterval=args.capInt,
         capPeriod=args.capPeriod,
         headless=args.headless,
