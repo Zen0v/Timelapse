@@ -206,10 +206,10 @@ def createParser():
     parser.add_argument(
         "--id",
         "--camID",
-        metavar="camera id",
-        default=0,
+        metavar="id",
+        default=1,
         type=int,
-        help="Which camera (usually 0 or 1) you'd like to use"
+        help="Which camera (usually 1 or 2) you'd like to use"
     )
     parser.add_argument(
         "-i",
