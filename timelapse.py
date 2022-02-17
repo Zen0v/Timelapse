@@ -123,11 +123,11 @@ class Timelapse(Thread):
                     if time.time() - frameDelta >= self.capInterval:
                         frameDelta = time.time()
 
-                        logging.info(f"Captured Image from {self.camID}")
+                        logging.info(f"Captured Image from {self.camID + 1}")
                         now = datetime.now()
                         imwrite(f"{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
                 else:
-                    logging.warning(f"Could not grab frame from camera {self.camID}")
+                    logging.warning(f"Could not grab frame from camera {self.camID + 1}")
 
                 if waitKey(1) & 0xFF == ord('q'):
                     raise KeyboardInterrupt
@@ -148,11 +148,11 @@ class Timelapse(Thread):
                     if time.time() - frameDelta >= self.capInterval:
                         frameDelta = time.time()
 
-                        logging.info(f"Captured Image from {self.camID}")
+                        logging.info(f"Captured Image from {self.camID + 1}")
                         now = datetime.now()
                         imwrite(f"{self.capDir}/{now.strftime('%Y-%m-%d_%H-%M-%S')}.png", img)
                 else:
-                    logging.warning(f"Could not grab frame from camera {self.camID}")
+                    logging.warning(f"Could not grab frame from camera {self.camID + 1}")
 
                 if waitKey(1) & 0xFF == ord('q'):
                     raise KeyboardInterrupt
@@ -197,7 +197,7 @@ class Timelapse(Thread):
         )
         logging.info(f"Writing at {res[0]}x{res[1]}")
 
-        for filename in glob.glob(f"{os.getcwd()}/{self.capDir}/*.png"):
+        for filename in glob.glob(f"{self.capDir}/*.png"):
             img = cv2.imread(filename)
             out.write(resize(img, res))
 

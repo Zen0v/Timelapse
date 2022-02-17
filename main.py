@@ -22,6 +22,23 @@ def main():
     except KeyboardInterrupt:
         sys.exit(0)
 
+def test():
+    timelapse = Timelapse(
+        camID=0,
+        camRes=Res.x720,
+        capInterval=5,
+        capPeriod=30,
+        headless=True,
+        genVideo=True
+    )
+    timelapse.preview()
+    timelapse.start()
+
+    try:
+        timelapse.join()
+    except KeyboardInterrupt:
+        sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
